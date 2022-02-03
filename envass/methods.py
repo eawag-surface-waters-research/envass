@@ -290,3 +290,8 @@ def qa_kmeans_threshold(vecX, ncluster=2, threshold=1.2):
         y_qual[igrfin] = True
 
     return y_qual
+def maintenance_flag(time,path):
+    maintenance_log=pd.read_csv(path, sep=';')
+    #Perform the extraction of the maintenance log
+    y_qual = np.zeros(len(time), dtype=bool)
+    return y_qual
