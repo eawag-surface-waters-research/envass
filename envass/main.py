@@ -1,7 +1,5 @@
-#from curses import window
 import numpy as np
 from .methods import *
-#from .methods import qa_numeric, qa_bounds, qa_edges, qa_iqr, maintenance_flag
 from .functions import check_data, to_dict
 
 
@@ -12,10 +10,10 @@ def qualityassurance(variable, time, **kwargs):
         Parameters:
             variable (np.array): Data array to which to apply the quality assurance
             time (np.array): Time array for the variable
-            kwargs (dictionnary): Integrate the type of test to perform with his corresponding parameters
+            kwargs (dictionary): Integrate the type of test to perform with his corresponding parameters
             type of test supported: numeric, bounds, edges, IQR, variation_rate, IQR_moving, IQR_window, convolution, kmeans, kmeans_threshold, maintenance, 
             parameters examples: window_size, window_type,semiwindow, ncluster, threshold
-            ex: {"numeric":True,"IQR":{"factor":3}}
+            e.g. {"numeric":True,"IQR":{"factor":3}}
         Returns:
             qa (np.array): An array of ints where > 0 means non-trusted data.
         """
@@ -34,27 +32,28 @@ def qualityassurance(variable, time, **kwargs):
         qa[qa_edges(time, **kwargs["edges"])] = 1
 
     if "IQR" in kwargs:
-        qa[qa_iqr(variable, time, **kwargs["IQR"] )] = 1
+        qa[qa_iqr(variable, time, **kwargs["IQR"])] = 1
 
     if "variation_rate" in kwargs:
         qa[qa_variation_rate(variable, time, **kwargs["variation_rate"])] = 1
     
     if "IQR_moving" in kwargs:
-        qa[qa_iqr_moving(variable, time,**kwargs["IQR_moving"])]=1
+        qa[qa_iqr_moving(variable, time, **kwargs["IQR_moving"])] = 1
 
     if "IQR_window" in kwargs:
-        qa[qa_max(variable, time,**kwargs["IQR_window"])] = 1
+        qa[qa_max(variable, time, **kwargs["IQR_window"])] = 1
 
     if "convolution" in kwargs:
         qa[qa_convolution(variable, time, **kwargs["convolution"])] = 1
 
     if "kmeans" in kwargs:
-        qa[qa_kmeans(variable, time,**kwargs["kmeans"])]=1
+        qa[qa_kmeans(variable, time, **kwargs["kmeans"])] = 1
     
     if "kmeans_threshold" in kwargs:
         qa[qa_kmeans_threshold(variable, time, **kwargs["kmeans_threshold"])] = 1
     
     if "maintenance" in kwargs:
-        qa[qa_maintenance(time,**kwargs["maintenance"])]=1
+        qa[qa_maintenance(time, **kwargs["maintenance"])] = 1
+
     return qa
 

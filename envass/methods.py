@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 from functools import partial
 from tqdm import tqdm
 from collections import defaultdict
-from tsmoothie import ConvolutionSmoother
+#from tsmoothie import ConvolutionSmoother
 from datetime import datetime
 import warnings
 
@@ -24,7 +24,7 @@ def qa_numeric(variable, prior_flags=False):
     flags[isnt_numeric(variable)] = True
     return flags
 
-def qa_bounds(variable, bounds, prior_flags = False):
+def qa_bounds(variable, bounds, prior_flags=False):
     """¨
     Indicate values which are not in the range specified by the bounds
 

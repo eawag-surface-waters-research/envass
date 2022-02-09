@@ -30,7 +30,6 @@ def isnt_number(n):
         return False
 
 def init_flag(time, prior_flags):
-    #Choose between existent bool array or create one
     try: 
         if len(prior_flags):
             flag = np.array(np.copy(prior_flags),dtype=bool)

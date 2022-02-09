@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 DESCRIPTION = 'ENVASS ENVironmental data quality ASSurance.'
 LONG_DESCRIPTION = 'ENVironmental data quality ASSurance for generating high quality data products.'
 
