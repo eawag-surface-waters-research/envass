@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 from functools import partial
 from tqdm import tqdm
 from collections import defaultdict
-#from tsmoothie import ConvolutionSmoother
+from tsmoothie import ConvolutionSmoother
 from datetime import datetime
 import warnings
 
