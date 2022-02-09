@@ -24,7 +24,7 @@ def qa_numeric(variable, prior_flags=False):
     flags[isnt_numeric(variable)] = True
     return flags
 
-def qa_bounds(variable, bounds, prior_flags = False):
+def qa_bounds(variable, bounds, prior_flags=False):
     """¨
     Indicate values which are not in the range specified by the bounds
 
@@ -33,7 +33,7 @@ def qa_bounds(variable, bounds, prior_flags = False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    data = pd.to_numeric(variable, errors='coerce')
+    data = pd.to_numeric(variable, errors='coerce').astype(np.float)
     data[qa_numeric(data)] = np.nan
     flags = init_flag(variable, prior_flags)
     flags[~np.isnan(data)] = np.logical_or(data[~np.isnan(data)] < float(bounds[0]), data[~np.isnan(data)] > float(bounds[1]))

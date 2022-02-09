@@ -8,11 +8,12 @@ def check_data(x, time):
         raise TypeError("Time and variable data should be of the same length")
 
 def to_dict(kwargs):
-    for key in kwargs:
+    for key in list(kwargs):
         if type(kwargs[key])!=dict:
-
-            kwargs[key]={key:kwargs[key]}
-        
+            if kwargs[key]==False:
+                kwargs.pop(key)
+            else:
+                kwargs[key]={key:kwargs[key]}
     return kwargs
 
 def check_parameters(test, kwargs, parameters):
@@ -30,7 +31,6 @@ def isnt_number(n):
         return False
 
 def init_flag(time, prior_flags):
-    #Choose between existent bool array or create one
     try: 
         if len(prior_flags):
             flag = np.array(np.copy(prior_flags),dtype=bool)
