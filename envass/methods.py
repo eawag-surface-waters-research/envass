@@ -7,7 +7,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from tsmoothie import ConvolutionSmoother
 from datetime import datetime
-from more_itertools import locate
+
 
 def qa_numeric(variable, prior_flags=False):
     """
@@ -34,7 +34,7 @@ def qa_bounds(variable, bounds, prior_flags=False):
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
     #data = pd.to_numeric(variable, errors='coerce').astype(np.float)
-    data = np.array(pd.DataFrame(variable).apply(pd.to_numeric, errors='coerce').astype(np.float))
+    data = np.squeeze(np.array(pd.DataFrame(variable).apply(pd.to_numeric, errors='coerce').astype(np.float)))
     data[qa_numeric(data)] = np.nan
     flags = init_flag(variable, prior_flags)
     flags[~np.isnan(data)] = np.logical_or(data[~np.isnan(data)] < float(bounds[0]), data[~np.isnan(data)] > float(bounds[1]))
