@@ -41,7 +41,7 @@ def init_flag(time, prior_flags):
         if len(prior_flags):
             flag = np.array(np.copy(prior_flags),dtype=bool)
     except:
-        flag = np.zeros(len(time), dtype=bool)
+        flag = np.zeros(time.shape, dtype=bool)
     return flag
 
 
