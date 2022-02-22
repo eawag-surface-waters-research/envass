@@ -5,7 +5,12 @@ def check_data(x, time):
     if type(x).__module__ != np.__name__:
         raise TypeError("Input must be a numpy array.")
     if len(x)!=len(time):
-        raise TypeError("Time and variable data should be of the same length")
+        if len(time) in x.shape:
+            print("2D array recognized")
+            if x.shape[0]>x.shape[1]:
+                warnings.warn("Numbers of rows is greater than numbers of columns, rows must be depth and columns is time !")
+        else: 
+            raise TypeError("Time and variable data should be of the same length")
 
 def to_dict(kwargs):
     for key in list(kwargs):
@@ -19,6 +24,7 @@ def to_dict(kwargs):
 def check_parameters(test, kwargs, parameters):
     for arguments in kwargs[test].keys():
         if arguments not in parameters[test]:
+            
             warnings.warn(f"argument {arguments} is not given to the function")
 
 def isnt_number(n):
@@ -41,6 +47,6 @@ def init_flag(time, prior_flags):
 
 def interp_nan(time, y):
     vec=np.copy(y)
-    nans, x= np.isnan(vec), lambda z: z.nonzero()[0]
+    nans, x = np.isnan(vec), lambda z: z.nonzero()[0]
     vec[nans]=np.interp(time[nans], time[~nans],vec[~nans])
     return vec

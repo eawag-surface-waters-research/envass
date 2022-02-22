@@ -7,7 +7,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from tsmoothie import ConvolutionSmoother
 from datetime import datetime
-import warnings
+from more_itertools import locate
 
 def qa_numeric(variable, prior_flags=False):
     """
@@ -117,7 +117,7 @@ def qa_variation_rate(variable, time, prior_flags=False):
 
         vec_quan = np.quantile(data, quantile_threshold)
         idx_vec = np.where(data >= vec_quan)[0]
-        idx = list(set(idx_vecdiff) & set(idx_vec))
+        idx = list(set(idx_vecdiff) & set(idx_vec)) 
     else:
         idx = []
     flags = np.array(flags, dtype=bool)
@@ -351,3 +351,72 @@ def qa_maintenance(time,path='./scripts/maintenance_log.csv', prior_flags=False)
 
     return flags
 
+def qa_grad(variable,time, grad_threshold=0.5, window_size=15,prior_flags=False):
+    """
+        Work in progress"""
+    data = interp_nan(time, np.copy(variable))
+    flags = init_flag(time, prior_flags)
+
+    grad=np.diff(data)/np.diff(time)
+    idx=np.where((np.diff(data)/np.diff(time))>0.1)[0]+1
+    if len(data) < window_size:
+        print("ERROR! Window size is larger than array length.")
+    else:
+        for i in range(0, (len(data) - window_size + 1)):
+            data_sub = np.copy(data[i:i + window_size])
+            #grad_sub = 
+
+def qa_individual(variable, time, individual_check, prior_flags = False):
+    flags = init_flag(time, prior_flags)
+    for i in individual_check:
+        flag_idx = np.where(i==time)[0]
+        flags[flag_idx] = True
+    return flags
+
+
+def visualize_QC(df_sub):
+    import plotly.graph_objs as go
+    import plotly.offline as py
+    from ipywidgets import interactive, HBox, VBox
+
+    variables=df_sub.columns
+
+
+    py.init_notebook_mode()
+    f = go.FigureWidget([go.Scatter(y = df_sub.index, x = df_sub.index, mode = 'markers')])
+    scatter = f.data[0]
+    N = len(df_sub)
+    scatter.marker.opacity = 0.8
+    def update_axes(xaxis, yaxis):
+        scatter = f.data[0]
+        scatter.x = df_sub[xaxis]
+        scatter.y = df_sub[yaxis]
+
+        with f.batch_update():
+            f.layout.xaxis.title = xaxis
+            f.layout.yaxis.title = yaxis
+            if "_qual" not in yaxis:
+                f.add_trace(go.Scatter(y = df_sub[yaxis][df_sub[yaxis+"_qual"]==0], x = df_sub[xaxis][df_sub[yaxis+"_qual"]==0], mode = 'markers', marker = dict(color = 'blue'), name = f'{yaxis} Trusted (=0)'))
+                f.add_trace(go.Scatter(y = df_sub[yaxis][df_sub[yaxis+"_qual"]==1], x = df_sub[xaxis][df_sub[yaxis+"_qual"]==1], mode = 'markers', marker = dict(color = 'darkred'), name = f'{yaxis} Not trusted (=1)'))
+            else: 
+                scatter.x = df_sub[xaxis]
+                scatter.y = df_sub[yaxis]
+
+    axis_dropdowns = interactive(update_axes, yaxis = df_sub.columns, xaxis = df_sub.columns)
+
+    # Create a table FigureWidget that updates on selection from points in the scatter plot of f
+    t = go.FigureWidget([go.Table(
+    header=dict(values=variables,
+                fill = dict(color='#C2D4FF'),
+                align = ['left'] * 5),
+    cells=dict(values=[df_sub[col] for col in variables],
+               fill = dict(color='#F5F8FF'),
+               align = ['left'] * 5))])
+
+    def selection_fn(trace,points,selector):
+        t.data[0].cells.values = [df_sub.loc[points.point_inds][col] for col in variables]
+
+    scatter.on_selection(selection_fn)
+
+    # Put everything together
+    return VBox((HBox(axis_dropdowns.children),f,t))
