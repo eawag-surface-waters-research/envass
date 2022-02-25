@@ -56,7 +56,7 @@ def qualityassurance(variable, time, **kwargs):
         qa[qa_maintenance(time, **kwargs["maintenance"])] = 1
 
     if "individual_check" in kwargs:
-        qa[qa_individual(variable, time, **kwargs["individual_check"])] = 1
+        qa[qa_individual(time, **kwargs["individual_check"])] = 1
 
     return qa
 

@@ -355,7 +355,17 @@ def qa_maintenance(time,path='maintenance_log.csv', prior_flags=False):
     return flags
 
 
-def qa_individual(variable, time, individual_check, prior_flags = False):
+def qa_individual(time, individual_check, prior_flags = False):
+    """ 
+        Read individual checks and flag 
+        
+        Parameters: 
+            time (np.array): Time array to which to apply the quality assurance
+            individual_check (list): List with points in time having to be removed 
+            prior_flags (np.array): An array of bools where True means non-trusted data
+        Returns:
+            flags (np.array): An array of bools where True means non-trusted data
+            """
     flags = init_flag(time, prior_flags)
     for i in individual_check:
         flag_idx = np.where(i==time)[0]
