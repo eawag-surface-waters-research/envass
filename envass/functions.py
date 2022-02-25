@@ -51,7 +51,7 @@ def interp_nan(time, y):
     vec[nans]=np.interp(time[nans], time[~nans],vec[~nans])
     return vec
 
-def visualize_quality_assurance(df_sub):
+def plot_quality_assurance(df_sub):
     import plotly.graph_objs as go
     import plotly.offline as py
     from ipywidgets import interactive, HBox, VBox
