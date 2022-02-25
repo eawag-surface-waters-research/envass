@@ -19,7 +19,7 @@ def qualityassurance(variable, time, **kwargs):
         """
     
     check_data(variable, time)
-    qa = np.zeros(len(variable), dtype=int)
+    qa = np.zeros(variable.shape, dtype=int)
     kwargs = to_dict(kwargs)
 
     if "numeric" in kwargs:
@@ -29,7 +29,7 @@ def qualityassurance(variable, time, **kwargs):
         qa[qa_bounds(variable, **kwargs["bounds"])] = 1
 
     if "edges" in kwargs:
-        qa[qa_edges(time, **kwargs["edges"])] = 1
+        qa[qa_edges(variable, time, **kwargs["edges"])] = 1
 
     if "IQR" in kwargs:
         qa[qa_iqr(variable, time, **kwargs["IQR"])] = 1
@@ -54,6 +54,9 @@ def qualityassurance(variable, time, **kwargs):
     
     if "maintenance" in kwargs:
         qa[qa_maintenance(time, **kwargs["maintenance"])] = 1
+
+    if "individual_check" in kwargs:
+        qa[qa_individual(time, **kwargs["individual_check"])] = 1
 
     return qa
 

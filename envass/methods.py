@@ -7,7 +7,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from tsmoothie import ConvolutionSmoother
 from datetime import datetime
-import warnings
+
 
 def qa_numeric(variable, prior_flags=False):
     """
@@ -33,27 +33,30 @@ def qa_bounds(variable, bounds, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    data = pd.to_numeric(variable, errors='coerce')
+    #data = pd.to_numeric(variable, errors='coerce').astype(np.float)
+    data = np.squeeze(np.array(pd.DataFrame(variable).apply(pd.to_numeric, errors='coerce').astype(np.float)))
     data[qa_numeric(data)] = np.nan
     flags = init_flag(variable, prior_flags)
     flags[~np.isnan(data)] = np.logical_or(data[~np.isnan(data)] < float(bounds[0]), data[~np.isnan(data)] > float(bounds[1]))
     return flags
 
-def qa_edges(time, edges, prior_flags=False):
+def qa_edges(variable, time, edges, prior_flags=False):
     """
     Indicate values on the edges of the data set
 
     Parameters:
+    variable (np.array): Data array to which to apply the quality assurance
         time (np.array): Time array corresponding to the Data array, time should be in seconds
         edges (int): time (s) in which the data will be cutted on the edges
         prior_flags (np.array): An array of bools where True means non-trusted data
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    flags = init_flag(time, prior_flags)
-    flags[time > time[-1] - edges] = True
-    flags[time < time[0] + edges] = True
-    return flags
+    flags = np.atleast_2d(init_flag(variable, prior_flags))
+    flags[:,time > time[-1] - edges] = True
+    flags[:,time < time[0] + edges] = True
+    return np.squeeze(flags)
+
 
 def qa_iqr(variable, time, factor=3, prior_flags=False):
     """
@@ -117,7 +120,7 @@ def qa_variation_rate(variable, time, prior_flags=False):
 
         vec_quan = np.quantile(data, quantile_threshold)
         idx_vec = np.where(data >= vec_quan)[0]
-        idx = list(set(idx_vecdiff) & set(idx_vec))
+        idx = list(set(idx_vecdiff) & set(idx_vec)) 
     else:
         idx = []
     flags = np.array(flags, dtype=bool)
@@ -324,7 +327,7 @@ def qa_kmeans_threshold(variable, time, ncluster=2, threshold=1.2, prior_flags=F
     flags = np.array(flags, dtype=bool)
     return flags
 
-def qa_maintenance(time,path='./scripts/maintenance_log.csv', prior_flags=False):
+def qa_maintenance(time,path='maintenance_log.csv', prior_flags=False):
     """
         Indicate the trustability of values based on the maintenance logbook
 
@@ -350,4 +353,23 @@ def qa_maintenance(time,path='./scripts/maintenance_log.csv', prior_flags=False)
         flags[mask]=True
 
     return flags
+
+
+def qa_individual(time, individual_check, prior_flags = False):
+    """ 
+        Read individual checks and flag 
+        
+        Parameters: 
+            time (np.array): Time array to which to apply the quality assurance
+            individual_check (list): List with points in time having to be removed 
+            prior_flags (np.array): An array of bools where True means non-trusted data
+        Returns:
+            flags (np.array): An array of bools where True means non-trusted data
+            """
+    flags = init_flag(time, prior_flags)
+    for i in individual_check:
+        flag_idx = np.where(i==time)[0]
+        flags[flag_idx] = True
+    return flags
+
 
