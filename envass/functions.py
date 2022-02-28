@@ -1,5 +1,8 @@
 import numpy as np
 import warnings
+import plotly.graph_objs as go
+import plotly.offline as py
+from ipywidgets import interactive, HBox, VBox
 
 def check_data(x, time):
     if type(x).__module__ != np.__name__:
@@ -52,13 +55,7 @@ def interp_nan(time, y):
     return vec
 
 def plot_quality_assurance(df_sub):
-    import plotly.graph_objs as go
-    import plotly.offline as py
-    from ipywidgets import interactive, HBox, VBox
-
     variables=df_sub.columns
-
-
     py.init_notebook_mode()
     f = go.FigureWidget([go.Scatter(y = df_sub.index, x = df_sub.index, mode = 'markers')])
     scatter = f.data[0]
@@ -97,3 +94,6 @@ def plot_quality_assurance(df_sub):
 
     # Put everything together
     return VBox((HBox(axis_dropdowns.children),f,t))
+
+def nan_helper(y):
+    return np.isnan(y), lambda z: z.nonzero()[0]

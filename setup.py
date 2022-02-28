@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 with open('README.md') as f:
     README = f.read()
 
-VERSION = '0.0.3'
+VERSION = '0.0.6'
 DESCRIPTION = 'ENVASS ENVironmental data quality ASSurance.'
 
 setup(
@@ -16,7 +16,14 @@ setup(
     long_description_content_type='text/markdown',
     packages=find_packages(),
     url='https://github.com/eawag-surface-waters-research/envass',
-    install_requires=[],
+    install_requires=[
+        'ipywidgets==7.6.5',
+        'numpy==1.19.5',
+        'pandas==1.1.5',
+        'plotly==5.6.0',
+        'scikit-learn==0.24.2',
+        'scipy==1.5.4'
+    ],
     license="MIT",
     keywords=['python', 'ENVASS', 'quality assurance', 'environmental data'],
 )

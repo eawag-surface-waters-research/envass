@@ -1,11 +1,7 @@
 import numpy as np
-from .functions import isnt_number, interp_nan, init_flag
+from .functions import isnt_number, interp_nan, init_flag, nan_helper
 import pandas as pd
 from sklearn.cluster import KMeans
-from functools import partial
-from tqdm import tqdm
-from collections import defaultdict
-from tsmoothie import ConvolutionSmoother
 from datetime import datetime
 
 
@@ -201,65 +197,6 @@ def qa_max(variable, time, factor=3, semiwindow=1000, prior_flags=False):
     flags = np.array(flags, dtype=bool)
     return flags
 
-def qa_convolution(variable, time, window_len=30, window_type='blackman', n_sigma=2, threshold=20,prior_flags =False):
-    """
-        Indicate the trustability of the values using convolutional smoothing of single or multiple time-series
-
-        Parameters:
-            variable (np.array): Data array to which to apply the quality assurance
-            window_len (int) : Greater than equal to 1. The length of the window used to compute
-    the convolutions.
-            window_type (str):  The type of the window used to compute the convolutions.
-    Supported types are: 'ones', 'hanning', 'hamming', 'bartlett', 'blackman'.
-            prior_flags (np.array): An array of bools where True means non-trusted data
-
-        Returns:
-            flags (np.array): An array of bools where True means non-trusted data for this outlier detection
-    """
-    data = interp_nan(time, np.copy(variable))
-    flags = init_flag(time, prior_flags)
-
-    timesteps = len(data)
-
-    series = defaultdict(partial(np.ndarray, shape=(1), dtype='float32'))
-
-    for i in tqdm(range(timesteps + 1), total=(timesteps + 1)):
-        if i > window_len:
-            smoother = ConvolutionSmoother(window_len=window_len, window_type=window_type)
-            smoother.smooth(series['original'][-window_len:])
-
-            series['smooth'] = np.hstack([series['smooth'], smoother.smooth_data[:, -1]])
-
-            _low, _up = smoother.get_intervals('sigma_interval', n_sigma=n_sigma)
-            series['low'] = np.hstack([series['low'], _low[:, -1]])
-            series['up'] = np.hstack([series['up'], _up[:, -1]])
-
-            is_anomaly = np.logical_or(
-                series['original'][-1] > series['up'][-1],
-                series['original'][-1] < series['low'][-1]
-            )
-
-            if is_anomaly.any():
-                series['idx'] = np.hstack([series['idx'], is_anomaly * i]).astype(int)
-
-        if i >= timesteps:
-            continue
-
-        series['original'] = np.hstack([series['original'], data[i]])
-
-    if len(series["idx"]) != 0:
-        idx0 = np.where(series['original'] > threshold)[0]
-        idx = np.intersect1d(idx0, series['idx'])
-        if len(idx) != 0:
-            if idx[-1] == len(data):
-                idx[-1] = idx[-1] - 1
-
-    if len(idx) != 0:
-        flags[idx] = 1
-        flags = np.array(flags, dtype=bool)
-
-    return flags
-
 def qa_kmeans(variable, time, ncluster=2, prior_flags = False):
     """
         Indicate outliers based on kmean clustering.
@@ -370,6 +307,25 @@ def qa_individual(time, individual_check, prior_flags = False):
     for i in individual_check:
         flag_idx = np.where(i==time)[0]
         flags[flag_idx] = True
+    return flags
+
+
+def qa_moving_average_limit(variable, window=100, limit=5, prior_flags=False):
+    """
+    Indicate values on the edges of the data set
+    Parameters:
+        variable (np.array): Data array to which to apply the quality assurance
+        window (int): Size of window for moving average
+        limit (flaot): Allowable distance from the moving average
+        prior_flags (np.array): An array of bools where True means non-trusted data
+    Returns:
+        flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
+    """
+    flags = init_flag(variable, prior_flags)
+    ma = np.convolve(variable, np.ones(window), 'same') / window
+    nans, xx = nan_helper(ma)
+    ma[nans] = np.interp(xx(nans), xx(~nans), ma[~nans])
+    flags[np.abs(ma - variable) > limit] = True
     return flags
 
 

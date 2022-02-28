@@ -43,9 +43,6 @@ def qualityassurance(variable, time, **kwargs):
     if "IQR_window" in kwargs:
         qa[qa_max(variable, time, **kwargs["IQR_window"])] = 1
 
-    if "convolution" in kwargs:
-        qa[qa_convolution(variable, time, **kwargs["convolution"])] = 1
-
     if "kmeans" in kwargs:
         qa[qa_kmeans(variable, time, **kwargs["kmeans"])] = 1
     
