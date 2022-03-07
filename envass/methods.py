@@ -329,3 +329,7 @@ def qa_moving_average_limit(variable, window=100, limit=5, prior_flags=False):
     return flags
 
 
+def qa_flagvalue(variable, value, prior_flags=False):
+    flags = init_flag(variable, prior_flags)
+    flags[np.where(variable==value)[0]]=1
+    return flags

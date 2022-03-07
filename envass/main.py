@@ -55,5 +55,8 @@ def qualityassurance(variable, time, **kwargs):
     if "individual_check" in kwargs:
         qa[qa_individual(time, **kwargs["individual_check"])] = 1
 
+    if "flag_value" in kwargs:
+        qa[qa_flagvalue(variable, **kwargs["flag_value"])] = 1
+        
     return qa
 
