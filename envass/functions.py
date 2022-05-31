@@ -9,7 +9,6 @@ def check_data(x, time):
         raise TypeError("Input must be a numpy array.")
     if len(x)!=len(time):
         if len(time) in x.shape:
-            print("2D array recognized")
             if x.shape[0]>x.shape[1]:
                 warnings.warn("Numbers of rows is greater than numbers of columns, rows must be depth and columns is time !")
         else: 

@@ -31,6 +31,9 @@ def qualityassurance(variable, time, **kwargs):
     if "edges" in kwargs:
         qa[qa_edges(variable, time, **kwargs["edges"])] = 1
 
+    if "monotonic" in kwargs:
+        qa[qa_monotonic(time, **kwargs["monotonic"])] = 1
+        
     if "IQR" in kwargs:
         qa[qa_iqr(variable, time, **kwargs["IQR"])] = 1
 
@@ -55,5 +58,6 @@ def qualityassurance(variable, time, **kwargs):
     if "individual_check" in kwargs:
         qa[qa_individual(time, **kwargs["individual_check"])] = 1
 
+        
     return qa
 

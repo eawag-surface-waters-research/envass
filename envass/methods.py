@@ -29,7 +29,6 @@ def qa_bounds(variable, bounds, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    #data = pd.to_numeric(variable, errors='coerce').astype(np.float)
     data = np.squeeze(np.array(pd.DataFrame(variable).apply(pd.to_numeric, errors='coerce').astype(np.float)))
     data[qa_numeric(data)] = np.nan
     flags = init_flag(variable, prior_flags)
@@ -53,6 +52,27 @@ def qa_edges(variable, time, edges, prior_flags=False):
     flags[:,time < time[0] + edges] = True
     return np.squeeze(flags)
 
+def qa_monotonic(time, monotonic, prior_flags=False):
+    '''
+    Indicate values which are not (strictly) increasing/decreasing
+
+    Parameters:
+        time (np.array): Time array corresponding to the Data array, time should be in seconds
+        monotonic (str): Indicate if the vector should be: strictly_increasing, increasing, strictly decreasing or decreasing
+        prior_flags (np.array): An array of bools where True means non-trusted data
+    Returns:
+        flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
+    '''
+    flags = init_flag(time, prior_flags)
+    if 'strictly_increasing'in monotonic:
+        flags[np.where(np.diff(time)<=0)[0]+1] = 1
+    if 'strictly_decreasing'in monotonic:
+        flags[np.where(np.diff(time)>=0)[0]+1] = 1
+    if 'increasing'in monotonic:
+        flags[np.where(np.diff(time)<0)[0]+1] = 1
+    if 'decreasing'in monotonic:
+        flags[np.where(np.diff(time)>0)[0]+1] = 1
+    return flags
 
 def qa_iqr(variable, time, factor=3, prior_flags=False):
     """
@@ -327,5 +347,4 @@ def qa_moving_average_limit(variable, window=100, limit=5, prior_flags=False):
     ma[nans] = np.interp(xx(nans), xx(~nans), ma[~nans])
     flags[np.abs(ma - variable) > limit] = True
     return flags
-
 
