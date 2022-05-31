@@ -53,6 +53,26 @@ def qa_edges(variable, time, edges, prior_flags=False):
     flags[:,time < time[0] + edges] = True
     return np.squeeze(flags)
 
+def qa_monotonic(time, monotonic, prior_flags=False):
+    '''
+    Indicate values which are not (strictly) increasing/decreasing
+
+    Parameters:
+        time (np.array): Time array corresponding to the Data array, time should be in seconds
+        type (str): Indicate if the vector should be: strictly_increasing, increasing, strictly decreasing or decreasing
+    Returns:
+        flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
+    '''
+    flags = init_flag(time, prior_flags)
+    if 'strictly_increasing'in monotonic:
+        flags[np.where(np.diff(time)<=0)[0]+1] = 1
+    if 'strictly_decreasing'in monotonic:
+        flags[np.where(np.diff(time)>=0)[0]+1] = 1
+    if 'increasing'in monotonic:
+        flags[np.where(np.diff(time)<0)[0]+1] = 1
+    if 'decreasing'in monotonic:
+        flags[np.where(np.diff(time)>0)[0]+1] = 1
+    return flags
 
 def qa_iqr(variable, time, factor=3, prior_flags=False):
     """
