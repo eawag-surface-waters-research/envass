@@ -3,3 +3,4 @@ dist
 envass.egg-info
 .idea
 envass/__pycache__
+tests/__pycache__

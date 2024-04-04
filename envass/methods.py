@@ -1,5 +1,5 @@
 import numpy as np
-from .functions import isnt_number, interp_nan, init_flag, nan_helper
+from . import functions
 import pandas as pd
 from sklearn.cluster import KMeans
 from datetime import datetime
@@ -14,11 +14,12 @@ def qa_numeric(variable, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    
-    flags = init_flag(variable, prior_flags)
-    isnt_numeric = np.vectorize(isnt_number, otypes=[bool])
+
+    flags = functions.init_flag(variable, prior_flags)
+    isnt_numeric = np.vectorize(functions.isnt_number, otypes=[bool])
     flags[isnt_numeric(variable)] = True
     return flags
+
 
 def qa_bounds(variable, bounds, prior_flags=False):
     """¨
@@ -29,11 +30,13 @@ def qa_bounds(variable, bounds, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    data = np.squeeze(np.array(pd.DataFrame(variable).apply(pd.to_numeric, errors='coerce').astype(np.float)))
+    data = np.squeeze(np.array(pd.DataFrame(variable).apply(pd.to_numeric, errors='coerce').astype(np.float64)))
     data[qa_numeric(data)] = np.nan
-    flags = init_flag(variable, prior_flags)
-    flags[~np.isnan(data)] = np.logical_or(data[~np.isnan(data)] < float(bounds[0]), data[~np.isnan(data)] > float(bounds[1]))
+    flags = functions.init_flag(variable, prior_flags)
+    flags[~np.isnan(data)] = np.logical_or(data[~np.isnan(data)] < float(bounds[0]),
+                                           data[~np.isnan(data)] > float(bounds[1]))
     return flags
+
 
 def qa_edges(variable, time, edges, prior_flags=False):
     """
@@ -47,10 +50,11 @@ def qa_edges(variable, time, edges, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    flags = np.atleast_2d(init_flag(variable, prior_flags))
-    flags[:,time > time[-1] - edges] = True
-    flags[:,time < time[0] + edges] = True
+    flags = np.atleast_2d(functions.init_flag(variable, prior_flags))
+    flags[:, time > time[-1] - edges] = True
+    flags[:, time < time[0] + edges] = True
     return np.squeeze(flags)
+
 
 def qa_monotonic(time, monotonic, prior_flags=False):
     '''
@@ -63,16 +67,17 @@ def qa_monotonic(time, monotonic, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     '''
-    flags = init_flag(time, prior_flags)
-    if 'strictly_increasing'in monotonic:
-        flags[np.where(np.diff(time)<=0)[0]+1] = 1
-    if 'strictly_decreasing'in monotonic:
-        flags[np.where(np.diff(time)>=0)[0]+1] = 1
-    if 'increasing'in monotonic:
-        flags[np.where(np.diff(time)<0)[0]+1] = 1
-    if 'decreasing'in monotonic:
-        flags[np.where(np.diff(time)>0)[0]+1] = 1
+    flags = functions.init_flag(time, prior_flags)
+    if 'strictly_increasing' in monotonic:
+        flags[np.where(np.diff(time) <= 0)[0] + 1] = 1
+    if 'strictly_decreasing' in monotonic:
+        flags[np.where(np.diff(time) >= 0)[0] + 1] = 1
+    if 'increasing' in monotonic:
+        flags[np.where(np.diff(time) < 0)[0] + 1] = 1
+    if 'decreasing' in monotonic:
+        flags[np.where(np.diff(time) > 0)[0] + 1] = 1
     return flags
+
 
 def qa_iqr(variable, time, factor=3, prior_flags=False):
     """
@@ -86,8 +91,8 @@ def qa_iqr(variable, time, factor=3, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data after this outlier detection
     """
-    data = interp_nan(time, np.copy(variable))
-    flags = init_flag(time, prior_flags)
+    data = functions.interp_nan(time, np.copy(variable))
+    flags = functions.init_flag(time, prior_flags)
 
     q75 = np.quantile(data, 0.75)
     q25 = np.quantile(data, 0.25)
@@ -104,6 +109,7 @@ def qa_iqr(variable, time, factor=3, prior_flags=False):
     flags[idx0] = True
     return flags
 
+
 def qa_variation_rate(variable, time, prior_flags=False):
     """
     Indicate the trustability of the  values if variation rate exceed a defined threshold.
@@ -115,9 +121,9 @@ def qa_variation_rate(variable, time, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    
-    data = interp_nan(time, np.copy(variable))
-    flags = init_flag(time, prior_flags)
+
+    data = functions.interp_nan(time, np.copy(variable))
+    flags = functions.init_flag(time, prior_flags)
 
     vec_diff = abs(np.diff(data))
     if len(vec_diff) > 0:
@@ -136,12 +142,13 @@ def qa_variation_rate(variable, time, prior_flags=False):
 
         vec_quan = np.quantile(data, quantile_threshold)
         idx_vec = np.where(data >= vec_quan)[0]
-        idx = list(set(idx_vecdiff) & set(idx_vec)) 
+        idx = list(set(idx_vecdiff) & set(idx_vec))
     else:
         idx = []
     flags = np.array(flags, dtype=bool)
     flags[idx] = True
     return flags
+
 
 def qa_iqr_moving(variable, time, window_size=15, factor=3, prior_flags=False):
     """
@@ -155,9 +162,9 @@ def qa_iqr_moving(variable, time, window_size=15, factor=3, prior_flags=False):
    Returns:
        flags (np.array): An array of bools where True means non-trusted data for this outlier dectection
    """
-    data = interp_nan(time, np.copy(variable))
+    data = functions.interp_nan(time, np.copy(variable))
 
-    flags = init_flag(time, prior_flags)
+    flags = functions.init_flag(time, prior_flags)
 
     if len(data) < window_size:
         print("ERROR! Window size is larger than array length.")
@@ -177,9 +184,10 @@ def qa_iqr_moving(variable, time, window_size=15, factor=3, prior_flags=False):
 
             if len(idx0) != 0:
                 flags[i + idx0] = flags[i + idx0] + 1
-    flags[flags>1]=1
+    flags[flags > 1] = 1
     flags = np.array(flags, dtype=bool)
     return flags
+
 
 def qa_max(variable, time, factor=3, semiwindow=1000, prior_flags=False):
     """
@@ -194,8 +202,8 @@ def qa_max(variable, time, factor=3, semiwindow=1000, prior_flags=False):
        Returns:
            flags (np.array): An array of bools where True means non-trusted data for this outlier detection
    """
-    data = interp_nan(time, np.copy(variable))
-    flags = init_flag(time, prior_flags)
+    data = functions.interp_nan(time, np.copy(variable))
+    flags = functions.init_flag(time, prior_flags)
 
     maxy = np.nanmax(data)
 
@@ -205,19 +213,20 @@ def qa_max(variable, time, factor=3, semiwindow=1000, prior_flags=False):
     if n0 < 0:
         n0 = 0  # maybe not ! check for the last dataset
     if n1 > (len(data) - 1):
-        n1 = len(data) - 1 #Yes but add the non evaluated dataset to the next bin
+        n1 = len(data) - 1  # Yes but add the non evaluated dataset to the next bin
 
     vec_sub = data[n0:n1]
     vec_qual = np.zeros(len(vec_sub))
     vec_time = time[n0:n1]
-    flags99 = qa_iqr(vec_sub,vec_time,factor)
+    flags99 = qa_iqr(vec_sub, vec_time, factor)
     if sum(flags99) > 0:
         flags[n0:n1] = flags[n0:n1] + flags99  # update vec_qual
 
     flags = np.array(flags, dtype=bool)
     return flags
 
-def qa_kmeans(variable, time, ncluster=2, prior_flags = False):
+
+def qa_kmeans(variable, time, ncluster=2, prior_flags=False):
     """
         Indicate outliers based on kmean clustering.
 
@@ -228,8 +237,8 @@ def qa_kmeans(variable, time, ncluster=2, prior_flags = False):
         Returns:
             flags (np.array): An array of bools where True means non-trusted data for this outlier detection
     """
-    data = interp_nan(time, np.copy(variable))
-    flags = init_flag(time, prior_flags)
+    data = functions.interp_nan(time, np.copy(variable))
+    flags = functions.init_flag(time, prior_flags)
 
     clusterer = KMeans(n_clusters=ncluster)
     clusterer.fit(data.reshape(-1, 1))
@@ -248,6 +257,7 @@ def qa_kmeans(variable, time, ncluster=2, prior_flags = False):
 
     return flags
 
+
 def qa_kmeans_threshold(variable, time, ncluster=2, threshold=1.2, prior_flags=False):
     """
         Indicate outliers based on kmean clustering and threshold value.
@@ -259,8 +269,8 @@ def qa_kmeans_threshold(variable, time, ncluster=2, threshold=1.2, prior_flags=F
         Returns:
             flags (np.array): An array of bools where True means non-trusted data for this outlier detection
     """
-    data = interp_nan(time, np.copy(variable))
-    flags = init_flag(time, prior_flags)
+    data = functions.interp_nan(time, np.copy(variable))
+    flags = functions.init_flag(time, prior_flags)
 
     clusterer = KMeans(n_clusters=ncluster)
     clusterer.fit(data.reshape(-1, 1))
@@ -284,7 +294,8 @@ def qa_kmeans_threshold(variable, time, ncluster=2, threshold=1.2, prior_flags=F
     flags = np.array(flags, dtype=bool)
     return flags
 
-def qa_maintenance(time,path='maintenance_log.csv', prior_flags=False):
+
+def qa_maintenance(time, path='maintenance_log.csv', prior_flags=False):
     """
         Indicate the trustability of values based on the maintenance logbook
 
@@ -295,24 +306,24 @@ def qa_maintenance(time,path='maintenance_log.csv', prior_flags=False):
         Returns:
             flags (np.array): An array of bools where True means non-trusted data
     """
-    maintenance_log=pd.read_csv(path, sep=';')
+    maintenance_log = pd.read_csv(path, sep=';')
 
-    flags = init_flag(time, prior_flags)
-    
-    start=maintenance_log.start.apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
-    end=maintenance_log.end.apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
-    maintenance_end=[datetime.timestamp(s) for s in end]
-    maintenance_start=[datetime.timestamp(s) for s in start]
-    
-    mask=[]
-    for i in  range(0,len(maintenance_end)):
-        mask=(time>maintenance_start[i]) & (time<maintenance_end[i])
-        flags[mask]=True
+    flags = functions.init_flag(time, prior_flags)
+
+    start = maintenance_log.start.apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
+    end = maintenance_log.end.apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
+    maintenance_end = [datetime.timestamp(s) for s in end]
+    maintenance_start = [datetime.timestamp(s) for s in start]
+
+    mask = []
+    for i in range(0, len(maintenance_end)):
+        mask = (time > maintenance_start[i]) & (time < maintenance_end[i])
+        flags[mask] = True
 
     return flags
 
 
-def qa_individual(time, individual_check, prior_flags = False):
+def qa_individual(time, individual_check, prior_flags=False):
     """ 
         Read individual checks and flag 
         
@@ -323,9 +334,9 @@ def qa_individual(time, individual_check, prior_flags = False):
         Returns:
             flags (np.array): An array of bools where True means non-trusted data
             """
-    flags = init_flag(time, prior_flags)
+    flags = functions.init_flag(time, prior_flags)
     for i in individual_check:
-        flag_idx = np.where(i==time)[0]
+        flag_idx = np.where(i == time)[0]
         flags[flag_idx] = True
     return flags
 
@@ -341,10 +352,9 @@ def qa_moving_average_limit(variable, window=100, limit=5, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    flags = init_flag(variable, prior_flags)
+    flags = functions.init_flag(variable, prior_flags)
     ma = np.convolve(variable, np.ones(window), 'same') / window
-    nans, xx = nan_helper(ma)
+    nans, xx = functions.nan_helper(ma)
     ma[nans] = np.interp(xx(nans), xx(~nans), ma[~nans])
     flags[np.abs(ma - variable) > limit] = True
     return flags
-
