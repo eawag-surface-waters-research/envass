@@ -16,8 +16,9 @@ def qa_numeric(variable, prior_flags=False):
     """
 
     flags = functions.init_flag(variable, prior_flags)
-    isnt_numeric = np.vectorize(functions.isnt_number, otypes=[bool])
-    flags[isnt_numeric(variable)] = True
+    arr = np.asarray(variable)
+    data = pd.to_numeric(arr.ravel(), errors="coerce")
+    flags[np.isnan(data).reshape(arr.shape)] = True
     return flags
 
 
@@ -30,12 +31,17 @@ def qa_bounds(variable, bounds, prior_flags=False):
     Returns:
         flag (np.array): An array of bools where True means non-trusted data for this outlier dectection
     """
-    data = np.squeeze(np.array(pd.DataFrame(variable).apply(pd.to_numeric, errors='coerce').astype(np.float64)))
-    data[qa_numeric(data)] = np.nan
+    arr = np.asarray(variable)
+    data = pd.to_numeric(arr.ravel(), errors="coerce").reshape(arr.shape).astype(np.float64)
     flags = functions.init_flag(variable, prior_flags)
-    flags[~np.isnan(data)] = np.logical_or(data[~np.isnan(data)] < float(bounds[0]),
-                                           data[~np.isnan(data)] > float(bounds[1]))
-    return flags
+    data_flat = data.ravel()
+    flags_flat = flags.ravel()
+    mask = ~np.isnan(data_flat)
+    flags_flat[mask] = np.logical_or(
+        data_flat[mask] < float(bounds[0]),
+        data_flat[mask] > float(bounds[1])
+    )
+    return flags_flat.reshape(data.shape)
 
 
 def qa_edges(variable, time, edges, prior_flags=False):
